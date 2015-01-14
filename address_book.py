@@ -1,4 +1,4 @@
-
+import json
 address_book = {}
 def main():
 
@@ -10,15 +10,17 @@ def main():
 
 		# While True: Creates a loop. Loop must eventually close. 
 
-		choice = raw_input("What do you want to do? add entry, remove entry, show list, or exit?  ")               
+		choice = raw_input("What do you want to do? add entry, remove entry, show list, or save and exit? \n  ")               
 
 		# Choice MUST be tabbed - tab after each colon.
 
 		if choice == "add entry":
 
-			name = raw_input("What is the name of the person you would like to add?"  )
+			fp = open('people.txt', 'r+')
 
-			number = raw_input( "What is the number of the person you would like to add?"  ) 
+			name = raw_input("What is the name of the person you would like to add? \n")
+
+			number = raw_input( "What is the number of the person you would like to add? \n") 
 
 			address_book[name] = number
 
@@ -26,7 +28,7 @@ def main():
 
 		elif choice == "remove entry":
 
-			removed_entry = raw_input("Which entry would you like to remove?")
+			removed_entry = raw_input("Which entry would you like to remove? \n")
 
 			del address_book[removed_entry]
 
@@ -40,11 +42,23 @@ def main():
 
 				
 
-		elif choice == "exit":
+		elif choice == "save and exit":
 
-			print "Thanks for using this program!"
+
+			fp =open('people.txt', "w")
+			json.dump(address_book,fp)
+			fp.close()
+			
+			
+			
+
+			print "Your file has been updated, thanks for using this program!"
 
 			break
+
+		
+			
+			
 
 		else: 
 
