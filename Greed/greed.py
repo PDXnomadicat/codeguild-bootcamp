@@ -1,4 +1,19 @@
+# Greed
+#
+# A multi-player Greed dice game for the Linux terminal!
+#
+# For rules see http://en.wikipedia.org/wiki/Farkle
+#
+# House rules: 6 dice, 1's are high, no additional points for sets > 3,
+# play to 10,000 and max players by default is 10.
+# 
+# Created by Joshua Ferdaszewski and Katherine Rea
+# at the PDX Code Guild Dev Bootcamp
+#
+
 import sys
+from collections import Counter
+
 max_players = 10
 winning_score = 10000
 num_dice = 6
@@ -31,9 +46,31 @@ def check_busted(dice):
     # iterate over the dice, check for scoring patterns. Return True if no dice are pointers; false otherwise.
     pass
 
-def dice_score(dice_values):
-    # Return score with the dice values passed in as a list (return 0 for no score)
-    return 1
+def dice_score(dice):
+    # Return score of dice, 0 for no score
+    # Argv could be a list of values or a list of dictionaries
+    if isinstance(dice[0], dict):
+        # create a list of dice values to score
+        dice_to_score = [die['value'] for die in dice if die['held'] == False]
+    else:
+        dice_to_score = dice
+
+    score = 0
+    for num, qty in Counter(dice_to_score).items():        
+        # Add score for sets of three
+        if qty >= 3:
+            if num != 1:
+                score += (num * 100)
+            else:
+                score += 1000
+
+        # Add score for 1's and 5's (excluding any scored as a triple set)
+        if num == 1:
+            score += 100 * (qty % 3)
+        elif num == 5:
+            score += 10 * (qty % 3)
+
+    return score
 
 
 def player_turn(players, player_index):
@@ -41,7 +78,7 @@ def player_turn(players, player_index):
     # Initialize dice and turn score at the start of the new player's turn
     dice = []
     for die in range(num_dice):
-        dice.append({'value': None, 'held': False})
+        dice.append({'value': 0, 'held': False})
     turn_score = 0
     player_name = players[player_index]['name']
 
@@ -56,11 +93,7 @@ def player_turn(players, player_index):
             return
 
         # Get current turn score + dice just rolled to display to player
-        dice_to_score = []
-        for die in dice:
-            if die['held'] == False:
-                dice_to_score.append(die['value'])
-        temp_dice_score = dice_score(dice_to_score)
+        temp_dice_score = dice_score(dice)
 
         # There are some points to be had! What does the user want to do?
         decision = raw_input("End turn and score %d points + current dice roll? (end).\nOR\nSelect dice to hold, and dice to roll again? (roll)\n(end/roll) > " % (turn_score + temp_dice_score))
