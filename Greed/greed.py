@@ -22,9 +22,40 @@ def roll(dice):
     # Roll the non held die and return the dice list
     pass
 
+def pointers(dice):
+
+    [{"value": 2, "held": False}, {"value": 2, "held": False}, {"value": 2, "held": False}, {"value": 2, "held": False}, {"value": 2, "held": False}, {"value": 2, "held": False}]
+
+
+
+
 def check_busted(dice):
     # iterate over the dice, check for scoring patterns. Return True if no dice are pointers; false otherwise.
-    pass
+
+    dice_values = []
+
+
+    for die in dice:
+
+        dice_values.append(die["value"])
+
+        if die["value"] != pointers:
+
+            return True
+            
+            print "True"
+        
+        else: 
+
+            return False
+            print "False"
+            
+
+
+
+       
+
+            
 
 
 def player_turn(players, player_index):
@@ -98,4 +129,8 @@ def main():
     print "Thank you for playing Greed! Goodbye."
 
 
-main()
+#main()
+
+test_data = pointers
+check_busted(test_data)
+
