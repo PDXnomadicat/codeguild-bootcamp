@@ -7,19 +7,21 @@
 # House rules: 6 dice, 1's are high, no additional points for sets > 3,
 # play to 10,000 and max players by default is 10.
 # 
-# Created by Joshua Ferdaszewski and Katherine Rea
+# Created by Joshua Ferdaszewski and Kaite
 # For the PDX Code Guild Dev Bootcamp
 #
+
+# TODO: pause between each dice when rolled/displayed
 
 import sys
 from collections import Counter
 from random import randint
 
 max_players = 10
-winning_score = 10000
+winning_score = 500
 num_dice = 6
 
-# dice ASCII art dict
+# dice ASCII art
 ascii_dice = {1:"""
  _____
 |     |
@@ -59,12 +61,12 @@ ascii_dice = {1:"""
 
 
 def clear_screen():
-    # ANSI excape sequence to clear screen and reset cursor to top left
+    # ANSI escape sequence to clear screen and reset cursor to top left
     sys.stdout.write('\033[2J')
     sys.stdout.write('\033[H')
     sys.stdout.flush()
 
-    # TODO: print out current score at top of screen with game name
+    print "\t\tGREED - The dice game\n"
 
 
 def winner(players):
@@ -87,6 +89,8 @@ def roll(dice):
 
 
 def display_dice(dice):
+    # TODO: display dice in a row, not a column
+
     # display each die, it's index, and if it is already held
     for i, die in enumerate(dice):
         print ascii_dice[die['value']]
@@ -94,12 +98,9 @@ def display_dice(dice):
     print "\n"
 
 
-def check_busted(dice):
-    # iterate over the dice, check for scoring patterns. Return True if no dice are pointers; false otherwise.
-    pass
-
-
 def dice_score(dice):
+    # TODO: if all dice are scoring, then "hot dice" rule
+
     # Return score of dice, 0 for no score
     # Argv could be a list of values or a list of dice dictionaries
     if isinstance(dice[0], dict):
@@ -110,7 +111,7 @@ def dice_score(dice):
 
     score = 0
     for num, qty in Counter(dice_to_score).items():    
-        # Add score for sets of three (force floor division for >1 sets of 3)
+        # Add score for sets of three
         if qty >= 3:
             if num != 1:
                 score += (num * 100) * (qty // 3)
@@ -121,12 +122,42 @@ def dice_score(dice):
         if num == 1:
             score += 100 * (qty % 3)
         elif num == 5:
-            score += 10 * (qty % 3)
+            score += 50 * (qty % 3)
     return score
 
 
+def held_dice(dice):
+    # Select dice to hold, and dice to roll again. Return score of selected dice
+    while True:
+        clear_screen()
+        display_dice(dice)
+        print "Select die/dice to hold (enter the index of dice to hold, separated by a comma)"
+        selection = raw_input("> ")
+
+        # Validate user input - dice_index is a list of integers that are the index of the dice selected by user
+        try:
+            dice_index = selection.split(',')
+            dice_index = [int(die_index.strip()) for die_index in dice_index]
+            dice_to_hold = [dice[die_index]['value'] for die_index in dice_index if dice[die_index]['held'] == False]
+            roll_score = dice_score(dice_to_hold)
+        except:
+            clear_screen()
+            raw_input("Invalid input. Press Enter and try again. ")
+            continue
+
+        # if selected dice are scoring dice
+        if roll_score > 0:
+            for i in dice_index:
+                dice[i]['held'] = True
+            return roll_score
+
+        else:
+            clear_screen()
+            raw_input("Non scoring dice selected. Press Enter and try again. ")
+            continue
+
+
 def player_turn(players, player_index):
-    
     # Initialize dice and turn score at the start of the new turn
     dice = []
     for die in range(num_dice):
@@ -136,7 +167,7 @@ def player_turn(players, player_index):
     clear_screen()
     print "%s it is your turn!" % player_name
     
-    # Turns can have 1-infinite rounds.
+    # Turns can have 1 to infinite rounds
     roll(dice)
     while True:
         # Get current turn score + dice just rolled to display to player
@@ -152,58 +183,23 @@ def player_turn(players, player_index):
         decision = raw_input("End turn and score %d points? (end)\n\t\tOR\nSelect dice to hold, and roll again? (roll)\n\n(end/roll) > " % (turn_score + temp_dice_score))
         decision = decision.lower() 
 
-        # End of turn. Take all points earned this turn plus current dice and add to user score
+        # End of turn.
         if decision == "end":
             turn_score += temp_dice_score
 
-            # Add turn score to player score and end this turn!
+            # Add turn score to player score and end the turn!
             players[player_index]['score'] += turn_score
             print "\n%s earned %d points this turn!\nFor a total score of %d!" % (player_name, turn_score, players[player_index]['score'])
-            raw_input("\nPress Enter to end your turn. ")
             return
 
         # User will try their luck and roll again!
         elif decision == "roll":
-
-            # Select dice to hold, and dice to roll again. Check that all held dice are pointer dice.
-            while True:
-                clear_screen()
-                display_dice(dice)
-                print "Select die/dice to hold (enter the index of dice to hold, separated by a comma)"
-                selection = raw_input("> ")
-
-                # Validate user input - dice_index is a list of ints that are the index of the dice selected by user
-                try:
-                    dice_index = selection.split(',')
-                    dice_index = [int(die_index.strip()) for die_index in dice_index]
-                    dice_to_hold = [dice[die_index]['value'] for die_index in dice_index if dice[die_index]['held'] == False]
-                    roll_score = dice_score(dice_to_hold)
-                except:
-                    clear_screen()
-                    raw_input("Invalid input. Press Enter and try again. ")
-                    continue
-
-                # if selected dice are scoring dice
-                clear_screen()
-                if roll_score > 0:
-                    turn_score += roll_score
-
-                    # Mark scored dice as held
-                    for i in dice_index:
-                        dice[i]['held'] = True
-                    roll(dice)
-                    break
-                else:
-                    raw_input("Non scoring dice selected. Press Enter and try again. ")
-                    continue
+            turn_score += held_dice(dice)
+            roll(dice)
 
         # Player typed an invalid selection
         else: 
             print "Invalid selection, try again!"
-
-    # turn is over, print scores and continue to next player
-    raw_input("%d, your turn is over. Press enter to continue")
-    clear_screen()
 
 
 def print_scores(players):
@@ -212,38 +208,38 @@ def print_scores(players):
 
 def main():
     clear_screen()
-
-    print "\t\tWelcome to Greed!\n"
-
-    print "How many players are there today?"
+    print "Welcome to Greed!\n"
+    print "How many players are there today?"    
     
-    num_players = raw_input("Please enter a number between 2-%d! >  " % max_players)
-    
-    num_players = int(num_players)  
-
+    # validate user input
+    num_players = 0
     while num_players not in range(2, (max_players + 1)):
         num_players = raw_input("Please enter a number between 2-%d! >  " % max_players)
-        num_players = int(num_players)
+        try:
+            num_players = int(num_players)
+        except ValueError:
+            print "Please give me a number."
+            continue
 
+    # initialize players - list of dictionaries
     players = []
     for player in range(1, num_players + 1):
         player_name = raw_input("Name of player %d > " % player)
-        players.append({'name': player_name, 'score': 0})
+        players.append({'name': player_name.strip(), 'score': 0})
 
-    # TODO: Randomly select starting player
-    current_player = 0
+    # Randomly select starting player
+    current_player = randint(0, num_players - 1)
 
-    # Game control loop
-    winning_player = None
-    while winning_player == None:
+    # Game control loop - play until there is a winner
+    while winner(players) == None:
         player_turn(players, current_player)
         current_player = (current_player + 1) % num_players
-        winning_player = winner(players)
+        print_scores(players)
+        raw_input("\nPress Enter for the next players turn!")
 
     clear_screen()
-    print "Congratulations %s! You are the winner!" % winning_player
+    print "Congratulations %s! You are the winner!" % winner(players)['name']
     print_scores(players)
-
     print "Thank you for playing Greed! Goodbye.\n\n"
 
 
