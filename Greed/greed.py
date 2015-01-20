@@ -204,7 +204,10 @@ def player_turn(players, player_index):
 
 def print_scores(players):
     # TODO: print player scores
-    pass
+    for player in players:
+        print player['name'],
+        print player['score']
+
 
 def main():
     clear_screen()
