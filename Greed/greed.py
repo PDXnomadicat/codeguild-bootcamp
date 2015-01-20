@@ -18,7 +18,7 @@ from time import sleep
 max_players = 10
 winning_score = 10000
 num_dice = 6
-pause_time = 0 # in seconds
+pause_time = .25 # in seconds
 
 # dice ASCII art
 ascii_dice = {1:"""
@@ -214,10 +214,9 @@ def player_turn(players, player_index):
 
 
 def print_scores(players):
-    # TODO: print player scores
+    print "\nCurrent Scores"
     for player in players:
-        print player['name'],
-        print player['score']
+        print player['name'], ":", player['score']
 
 
 def main():
