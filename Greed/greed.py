@@ -10,16 +10,15 @@
 # Created by Joshua Ferdaszewski and Kaite
 # For the PDX Code Guild Dev Bootcamp
 #
-
-# TODO: pause between each dice when rolled/displayed
-
 import sys
 from collections import Counter
 from random import randint
+from time import sleep
 
 max_players = 10
 winning_score = 10000
 num_dice = 6
+pause_time = 0 # in seconds
 
 # dice ASCII art
 ascii_dice = {1:"""
@@ -93,15 +92,13 @@ def display_dice(dice):
 
     # display each die, it's index, and if it is already held
     for i, die in enumerate(dice):
+        sleep(pause_time)
         print ascii_dice[die['value']]
-        print "Index: %d Held: %s" % (i, die['held'])
+        print "Index: %d\nHeld: %s" % (i, die['held'])
     print "\n"
 
 
 def dice_score(dice):
-    # TODO: if all dice are scoring, then "hot dice" rule
-    # TODO: don't allow non scoring dice to be held (to make hot-dice work)
-
     # Return score of dice, 0 for no score. and Boolean if hot dice.
     # Argv could be a list of values or a list of dice dictionaries
     if isinstance(dice[0], dict):
@@ -115,19 +112,19 @@ def dice_score(dice):
     for num, qty in Counter(dice_to_score).items():    
         # Add score for sets of three
         if qty >= 3:
-            if num != 1:
-                score += (num * 100) * (qty // 3)
-            else:
+            scored_dice += (qty // 3) * 3
+            if num == 1:
                 score += 1000 * (qty // 3)
-            scored_dice += qty // 3
+            else:
+                score += (num * 100) * (qty // 3)
 
         # Add score for 1's and 5's (excluding any scored as a triple set)
         if num == 1:
             score += 100 * (qty % 3)
-            scored_dice += qty % 3
+            scored_dice += (qty % 3)
         elif num == 5:
             score += 50 * (qty % 3)
-            scored_dice += qty % 3
+            scored_dice += (qty % 3)
     return score, scored_dice == len(dice_to_score)
 
 
@@ -144,14 +141,14 @@ def held_dice(dice):
             dice_index = selection.split(',')
             dice_index = [int(die_index.strip()) for die_index in dice_index]
             dice_to_hold = [dice[die_index]['value'] for die_index in dice_index if dice[die_index]['held'] == False]
-            roll_score, hot_dice = dice_score(dice_to_hold)
         except:
             clear_screen()
             raw_input("Invalid input. Press Enter and try again. ")
             continue
 
-        # if selected dice are scoring dice
-        if roll_score > 0:
+        # if selected dice are scoring dice and only scoring dice
+        roll_score, hot_dice = dice_score(dice_to_hold)
+        if roll_score > 0 and hot_dice:
             for i in dice_index:
                 dice[i]['held'] = True
             return roll_score
@@ -189,7 +186,9 @@ def player_turn(players, player_index):
             turn_score += temp_dice_score
             for i in range(len(dice)):
                 dice[i]['held'] = False
-            print "\n\t\tHOT DICE! You can roll all your dice again!"
+            raw_input("\n\t\tHOT DICE! You can roll all your dice again!")
+            roll(dice)
+            continue
 
         # There are some points to be had! What does the user want to do?
         decision = raw_input("End turn and score %d points? (end)\n\t\tOR\nSelect dice to hold, and roll again? (roll)\n\n(end/roll) > " % (turn_score + temp_dice_score))
